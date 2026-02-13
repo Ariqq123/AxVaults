@@ -100,37 +100,24 @@ public class ItemMatcher {
         if (!(val instanceof List<?> tags) || tags.isEmpty()) return false;
         needMatch++;
 
-        boolean hasRule = false;
         for (Object key : tags) {
             if (!(key instanceof String nbtKey) || nbtKey.isBlank()) continue;
-            hasRule = true;
             if (!hasNbtTag(itemStack, nbtKey)) return false;
         }
 
-        return hasRule;
+        return true;
     }
 
     public static boolean hasNbtTag(ItemStack itemStack, String key) {
         if (itemStack == null || key == null || key.isBlank()) return false;
         SerializedNbt nbt = serialize(itemStack);
+        String lower = key.toLowerCase();
 
         for (String serializedKey : nbt.values().keySet()) {
-            if (matchesNbtKey(key, serializedKey)) return true;
+            if (serializedKey.toLowerCase().contains(lower)) return true;
         }
 
-        return nbt.internal() != null && nbt.internal().toLowerCase().contains(key.toLowerCase());
-    }
-
-    private static boolean matchesNbtKey(String wanted, String serializedKey) {
-        String wantedLower = wanted.toLowerCase();
-        String serializedLower = serializedKey.toLowerCase();
-        if (SimpleRegex.matches(wantedLower, serializedLower)) return true;
-
-        int lastDot = serializedLower.lastIndexOf('.');
-        if (lastDot == -1) return false;
-
-        String terminalKey = serializedLower.substring(lastDot + 1);
-        return SimpleRegex.matches(wantedLower, terminalKey);
+        return nbt.internal() != null && nbt.internal().toLowerCase().contains(lower);
     }
 
     private boolean containsEntry(Map<String, String> serialized, String keyRegex, String valueRegex, String internal) {
