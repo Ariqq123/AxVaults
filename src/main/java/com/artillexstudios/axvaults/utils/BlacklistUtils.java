@@ -16,6 +16,7 @@ public class BlacklistUtils {
     public static boolean isBlacklisted(@Nullable ItemStack it) {
         if (it == null || it.getType() == Material.AIR) return false;
         if (checkLegacy(it)) return true;
+        if (checkGlobalNbtTags(it)) return true;
         try {
             List<Map<String, Object>> list = CONFIG.getMapList("blacklist-items");
             if (list == null || list.isEmpty()) return false;
@@ -28,6 +29,17 @@ public class BlacklistUtils {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+        return false;
+    }
+
+    private static boolean checkGlobalNbtTags(ItemStack it) {
+        List<String> tags = CONFIG.getStringList("nbt-tags");
+        if (tags == null || tags.isEmpty()) return false;
+
+        for (String tag : tags) {
+            if (ItemMatcher.hasNbtTag(it, tag)) return true;
+        }
+
         return false;
     }
 

@@ -31,6 +31,7 @@ public class ItemMatcher {
         if (name()) matches++;
         if (customModelData()) matches++;
         if (nbtValue()) matches++;
+        if (nbtTags()) matches++;
         return matches >= needMatch;
     }
 
@@ -67,28 +68,24 @@ public class ItemMatcher {
         if (val == null) return false;
         needMatch++;
 
-        if (itemStack == null) return false;
-
-        Map<String, String> serialized = new LinkedHashMap<>();
-        flatten(serialized, "", itemStack.serialize());
-        String internal = findInternal(serialized);
+        SerializedNbt nbt = serialize(itemStack);
 
         if (val instanceof String input) {
             String[] split = input.split("=", 2);
             if (split.length == 2) {
-                return containsEntry(serialized, split[0], split[1], internal);
+                return containsEntry(nbt.values(), split[0], split[1], nbt.internal());
             }
 
-            for (String value : serialized.values()) {
+            for (String value : nbt.values().values()) {
                 if (SimpleRegex.matches(input, value)) return true;
             }
 
-            return internal != null && SimpleRegex.matches(input, internal);
+            return nbt.internal() != null && SimpleRegex.matches(input, nbt.internal());
         }
 
         if (val instanceof Map<?, ?> tags) {
             for (Map.Entry<?, ?> entry : tags.entrySet()) {
-                if (!containsEntry(serialized, Objects.toString(entry.getKey(), ""), Objects.toString(entry.getValue(), ""), internal)) {
+                if (!containsEntry(nbt.values(), Objects.toString(entry.getKey(), ""), Objects.toString(entry.getValue(), ""), nbt.internal())) {
                     return false;
                 }
             }
@@ -96,6 +93,31 @@ public class ItemMatcher {
         }
 
         return false;
+    }
+
+    public boolean nbtTags() {
+        Object val = map.get("nbt-tags");
+        if (!(val instanceof List<?> tags) || tags.isEmpty()) return false;
+        needMatch++;
+
+        for (Object key : tags) {
+            if (!(key instanceof String nbtKey) || nbtKey.isBlank()) continue;
+            if (!hasNbtTag(itemStack, nbtKey)) return false;
+        }
+
+        return true;
+    }
+
+    public static boolean hasNbtTag(ItemStack itemStack, String key) {
+        if (itemStack == null || key == null || key.isBlank()) return false;
+        SerializedNbt nbt = serialize(itemStack);
+        String lower = key.toLowerCase();
+
+        for (String serializedKey : nbt.values().keySet()) {
+            if (serializedKey.toLowerCase().contains(lower)) return true;
+        }
+
+        return nbt.internal() != null && nbt.internal().toLowerCase().contains(lower);
     }
 
     private boolean containsEntry(Map<String, String> serialized, String keyRegex, String valueRegex, String internal) {
@@ -112,15 +134,23 @@ public class ItemMatcher {
         return SimpleRegex.matches("*" + valueRegex + "*", sliced);
     }
 
-    private String findInternal(Map<String, String> serialized) {
+    private static SerializedNbt serialize(ItemStack itemStack) {
+        Map<String, String> serialized = new LinkedHashMap<>();
+        if (itemStack != null) {
+            flatten(serialized, "", itemStack.serialize());
+        }
+
+        String internal = null;
         for (Map.Entry<String, String> entry : serialized.entrySet()) {
             if (!entry.getKey().toLowerCase().endsWith("internal")) continue;
-            return entry.getValue();
+            internal = entry.getValue();
+            break;
         }
-        return null;
+
+        return new SerializedNbt(serialized, internal);
     }
 
-    private void flatten(Map<String, String> output, String parent, Object object) {
+    private static void flatten(Map<String, String> output, String parent, Object object) {
         if (object instanceof Map<?, ?> currentMap) {
             for (Map.Entry<?, ?> entry : currentMap.entrySet()) {
                 String key = parent.isEmpty() ? Objects.toString(entry.getKey(), "") : parent + "." + Objects.toString(entry.getKey(), "");
@@ -139,5 +169,8 @@ public class ItemMatcher {
         }
 
         output.put(parent, Objects.toString(object, ""));
+    }
+
+    private record SerializedNbt(Map<String, String> values, String internal) {
     }
 }

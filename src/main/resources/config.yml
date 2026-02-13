@@ -78,11 +78,12 @@ async-item-serializer: false
 #  > material / type
 #  > custom-model-data (only the old variant)
 #  > nbt-value / nbt
-#    examples:
+#  > nbt-tags
+#    examples in blacklist-items:
 #    - nbt-value: "MMOITEMS_ITEM_ID=SWORD"
-#    - nbt-value:
-#        MMOITEMS_ITEM_TYPE: "SWORD"
-#        MYTHICLIB_GEM_STONE: "*ruby*"
+#    - nbt-tags:
+#        - "MMOITEMS_ITEM_ID"
+#        - "MYTHIC_TYPE"
 blacklist-items:
   - custom-model-data: 100
     material: BARRIER
@@ -90,6 +91,12 @@ blacklist-items:
   - custom-model-data: 150
     material: BARRIER
     name: "*Another custom item*"
+
+# Advanced: Don't allow items with these NBT keys
+# Compatible with MMOItems ("MMOITEMS_ITEM_ID"), MythicMobs, etc.
+nbt-tags: []
+#  - "MMOITEMS_ITEM_ID"
+#  - "MYTHIC_TYPE"
 
 # you must define at least 1
 # requires a restart to update
