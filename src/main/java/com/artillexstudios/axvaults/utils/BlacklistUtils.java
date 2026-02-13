@@ -21,7 +21,7 @@ public class BlacklistUtils {
             if (list == null || list.isEmpty()) return false;
             WrappedItemStack wrap = WrappedItemStack.wrap(it);
             for (Map<String, Object> map : list) {
-                ItemMatcher matcher = new ItemMatcher(wrap, map);
+                ItemMatcher matcher = new ItemMatcher(it, wrap, map);
                 boolean result = matcher.isMatching();
                 if (result) return true;
             }

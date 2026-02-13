@@ -77,6 +77,12 @@ async-item-serializer: false
 #  > name
 #  > material / type
 #  > custom-model-data (only the old variant)
+#  > nbt-value / nbt
+#    examples:
+#    - nbt-value: "MMOITEMS_ITEM_ID=SWORD"
+#    - nbt-value:
+#        MMOITEMS_ITEM_TYPE: "SWORD"
+#        MYTHICLIB_GEM_STONE: "*ruby*"
 blacklist-items:
   - custom-model-data: 100
     material: BARRIER
